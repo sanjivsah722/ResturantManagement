@@ -29,6 +29,21 @@ var app = builder.Build();
 
 app.UseCors("ReactApp");
 
+app.MapGet("/", () => Results.Ok(new
+{
+    application = "Restaurant Management API",
+    status = "Running",
+    endpoints = new[]
+    {
+        "/api/auth/login",
+        "/api/dashboard",
+        "/api/tables",
+        "/api/menu",
+        "/api/orders",
+        "/api/reservations"
+    }
+}));
+
 app.MapAuthEndpoints();
 app.MapRestaurantEndpoints();
 
