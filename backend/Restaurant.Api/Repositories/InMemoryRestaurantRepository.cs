@@ -1,7 +1,14 @@
-namespace Restaurant.Api;
+using Restaurant.Api.Contracts.Orders;
+using Restaurant.Api.Domain.Menu;
+using Restaurant.Api.Domain.Orders;
+using Restaurant.Api.Domain.Reservations;
+using Restaurant.Api.Domain.Tables;
 
-public sealed class RestaurantStore
+namespace Restaurant.Api.Repositories;
+
+public sealed class InMemoryRestaurantRepository : IRestaurantRepository
 {
+    private readonly Lock _lock = new();
     private readonly List<RestaurantTable> _tables =
     [
         new(1, "T1", 2, TableStatus.Available),
@@ -46,29 +53,52 @@ public sealed class RestaurantStore
 
     private int _nextOrderId = 1003;
 
-    public IReadOnlyList<RestaurantTable> Tables => _tables;
+    public IReadOnlyList<RestaurantTable> GetTables() => _tables;
 
-    public IReadOnlyList<MenuItem> Menu => _menu;
+    public IReadOnlyList<MenuItem> GetMenu() => _menu;
 
-    public IReadOnlyList<Order> Orders => _orders.OrderByDescending(order => order.CreatedAt).ToList();
+    public IReadOnlyList<Order> GetOrders() => _orders.OrderByDescending(order => order.CreatedAt).ToList();
 
-    public IReadOnlyList<Reservation> Reservations => _reservations.OrderBy(reservation => reservation.ReservationTime).ToList();
-
-    public object GetDashboard()
-    {
-        var todayOrders = _orders.Where(order => order.CreatedAt.Date == DateTime.Today).ToList();
-
-        return new
-        {
-            revenueToday = todayOrders.Where(order => order.Status != OrderStatus.Cancelled).Sum(order => order.Total),
-            activeOrders = todayOrders.Count(order => order.Status is OrderStatus.New or OrderStatus.Preparing or OrderStatus.Served),
-            reservationsToday = _reservations.Count(reservation => reservation.ReservationTime.Date == DateTime.Today),
-            occupiedTables = _tables.Count(table => table.Status == TableStatus.Occupied),
-            totalTables = _tables.Count
-        };
-    }
+    public IReadOnlyList<Reservation> GetReservations() => _reservations.OrderBy(reservation => reservation.ReservationTime).ToList();
 
     public RestaurantTable? UpdateTableStatus(int tableId, TableStatus status)
+    {
+        lock (_lock)
+        {
+            return SetTableStatus(tableId, status);
+        }
+    }
+
+    public Order CreateOrder(CreateOrderRequest request)
+    {
+        lock (_lock)
+        {
+            var items = request.Items
+                .Where(item => item.Quantity > 0)
+                .Select(item =>
+                {
+                    var menuItem = _menu.Single(menu => menu.Id == item.MenuItemId);
+                    return new OrderItem(menuItem.Id, menuItem.Name, item.Quantity, menuItem.Price);
+                })
+                .ToList();
+
+            var order = new Order(_nextOrderId++, request.TableId, request.CustomerName.Trim(), OrderStatus.New, DateTime.Now, items);
+            _orders.Add(order);
+            SetTableStatus(request.TableId, TableStatus.Occupied);
+
+            return order;
+        }
+    }
+
+    public bool TableExists(int tableId) => _tables.Any(table => table.Id == tableId);
+
+    public bool MenuItemsExist(IEnumerable<CreateOrderItemRequest> items)
+    {
+        var menuIds = _menu.Select(menuItem => menuItem.Id).ToHashSet();
+        return items.All(item => menuIds.Contains(item.MenuItemId));
+    }
+
+    private RestaurantTable? SetTableStatus(int tableId, TableStatus status)
     {
         var index = _tables.FindIndex(table => table.Id == tableId);
         if (index < 0)
@@ -78,28 +108,5 @@ public sealed class RestaurantStore
 
         _tables[index] = _tables[index] with { Status = status };
         return _tables[index];
-    }
-
-    public Order CreateOrder(CreateOrderRequest request)
-    {
-        var items = request.Items
-            .Where(item => item.Quantity > 0)
-            .Select(item =>
-            {
-                var menuItem = _menu.Single(menu => menu.Id == item.MenuItemId);
-                return new OrderItem(menuItem.Id, menuItem.Name, item.Quantity, menuItem.Price);
-            })
-            .ToList();
-
-        var order = new Order(_nextOrderId++, request.TableId, request.CustomerName, OrderStatus.New, DateTime.Now, items);
-        _orders.Add(order);
-        UpdateTableStatus(request.TableId, TableStatus.Occupied);
-        return order;
-    }
-
-    public bool MenuItemsExist(IEnumerable<CreateOrderItemRequest> items)
-    {
-        var menuIds = _menu.Select(menuItem => menuItem.Id).ToHashSet();
-        return items.All(item => menuIds.Contains(item.MenuItemId));
     }
 }

@@ -36,6 +36,11 @@ button {
   max-width: 1280px;
 }
 
+.topbar-actions {
+  display: flex;
+  gap: 10px;
+}
+
 .eyebrow {
   color: #62736a;
   font-size: 0.78rem;
@@ -82,6 +87,28 @@ h3 {
   width: 44px;
 }
 
+.icon-button.secondary {
+  background: #ffffff;
+  border: 1px solid #cfd8d1;
+  color: #17201b;
+}
+
+.session-line {
+  align-items: center;
+  color: #62736a;
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.session-line b {
+  background: #dcefe5;
+  border-radius: 8px;
+  color: #0d6b43;
+  font-size: 0.78rem;
+  padding: 5px 8px;
+}
+
 .notice {
   background: #fff3ca;
   border: 1px solid #ead27d;
@@ -89,6 +116,11 @@ h3 {
   margin: 0 auto 18px;
   max-width: 1280px;
   padding: 12px 14px;
+}
+
+.notice.error {
+  background: #ffe8e3;
+  border-color: #e7a092;
 }
 
 .metrics,
@@ -277,6 +309,79 @@ label {
   padding: 0 18px;
 }
 
+.primary-action {
+  align-items: center;
+  background: #0d6b43;
+  border: 0;
+  border-radius: 8px;
+  color: white;
+  display: inline-flex;
+  font-weight: 800;
+  gap: 8px;
+  justify-content: center;
+  min-height: 46px;
+  padding: 0 18px;
+}
+
+.primary-action:disabled {
+  cursor: not-allowed;
+  opacity: 0.72;
+}
+
+.login-shell {
+  align-items: center;
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(320px, 430px) minmax(320px, 460px);
+  justify-content: center;
+  min-height: 100vh;
+  padding: 28px;
+}
+
+.login-panel {
+  background: #ffffff;
+  border: 1px solid #dde3dc;
+  border-radius: 8px;
+  padding: 26px;
+}
+
+.login-brand {
+  margin-bottom: 24px;
+}
+
+.login-brand h1 {
+  font-size: clamp(2rem, 5vw, 3.5rem);
+}
+
+.login-form {
+  display: grid;
+  gap: 14px;
+}
+
+.login-demo {
+  align-self: stretch;
+}
+
+.role-row {
+  align-items: center;
+  background: #fbfcfb;
+  border: 1px solid #e1e6e1;
+  border-radius: 8px;
+  color: #17201b;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  padding: 14px;
+  text-align: left;
+  width: 100%;
+}
+
+.role-row strong,
+.role-row small {
+  display: block;
+}
+
 .list-row {
   align-items: center;
   border-top: 1px solid #e8ece8;
@@ -298,7 +403,8 @@ label {
 @media (max-width: 980px) {
   .metrics,
   .workspace,
-  .lists {
+  .lists,
+  .login-shell {
     grid-template-columns: 1fr;
   }
 
@@ -314,6 +420,10 @@ label {
 
   .topbar {
     align-items: flex-start;
+  }
+
+  .topbar-actions {
+    flex-direction: column;
   }
 
   .metrics,

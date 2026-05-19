@@ -1,10 +1,17 @@
+# .NET
 bin/
 obj/
-dist/
+TestResults/
+
+# Frontend
 node_modules/
+dist/
+.vite/
+
+# Environment
+.env
+.env.local
+
+# IDE
 .vs/
 .vscode/
-*.user
-*.suo
-*.log
-*.tmp
